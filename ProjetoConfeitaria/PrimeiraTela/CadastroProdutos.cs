@@ -1,0 +1,1025 @@
+﻿using System;
+using System.Data;
+using System.Drawing;
+using System.Globalization;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using MySql.Data.MySqlClient;
+
+namespace PrimeiraTela
+{
+    public partial class CadastroProdutos : Form
+    {
+        private int idProdutoSelecionado = 0;
+
+        public CadastroProdutos()
+        {
+            InitializeComponent();
+
+            this.Load += CadastroProdutos_Load;
+        }
+
+        private void CadastroProdutos_Load(object sender, EventArgs e)
+        {
+            ConfigurarGrid();
+            ConfigurarEventos();
+
+            CarregarCategoriasCadastro();
+            CarregarCategoriasFiltro();
+            CarregarCategoriasLista();
+            CarregarProdutos();
+
+            panelNovaCategoria.Visible = false;
+        }
+
+        private void ConfigurarEventos()
+        {
+            button1.Click -= button1_Click;
+            button1.Click += button1_Click;
+
+            btnfiltrarprodutos.Click -= btnfiltrarprodutos_Click;
+            btnfiltrarprodutos.Click += btnfiltrarprodutos_Click;
+
+            btnremover.Click -= btnremover_Click;
+            btnremover.Click += btnremover_Click;
+
+            dgvprodutos.CellDoubleClick -= dgvprodutos_CellDoubleClick;
+            dgvprodutos.CellDoubleClick += dgvprodutos_CellDoubleClick;
+
+            txtpesquisarprod.KeyDown -= txtpesquisarprod_KeyDown;
+            txtpesquisarprod.KeyDown += txtpesquisarprod_KeyDown;
+
+            cbFiltroCategoria.SelectedIndexChanged -= cbFiltroCategoria_SelectedIndexChanged;
+            cbFiltroCategoria.SelectedIndexChanged += cbFiltroCategoria_SelectedIndexChanged;
+
+            btnAbrirCategoria.Click -= btnAbrirCategoria_Click;
+            btnAbrirCategoria.Click += btnAbrirCategoria_Click;
+
+            btnSalvarCategoria.Click -= btnSalvarCategoria_Click;
+            btnSalvarCategoria.Click += btnSalvarCategoria_Click;
+
+            btnCancelarCategoria.Click -= btnCancelarCategoria_Click;
+            btnCancelarCategoria.Click += btnCancelarCategoria_Click;
+
+            btnRemoverCategoria.Click -= btnRemoverCategoria_Click;
+            btnRemoverCategoria.Click += btnRemoverCategoria_Click;
+
+            textBox1.KeyPress -= BloquearCaracteresInvalidos_KeyPress;
+            textBox1.KeyPress += BloquearCaracteresInvalidos_KeyPress;
+
+            txtNovaCategoria.KeyPress -= BloquearCaracteresInvalidos_KeyPress;
+            txtNovaCategoria.KeyPress += BloquearCaracteresInvalidos_KeyPress;
+        }
+
+        private void ConfigurarGrid()
+        {
+            dgvprodutos.AutoGenerateColumns = false;
+            dgvprodutos.Columns.Clear();
+
+            dgvprodutos.AllowUserToAddRows = false;
+            dgvprodutos.AllowUserToDeleteRows = false;
+            dgvprodutos.AllowUserToResizeRows = false;
+            dgvprodutos.AllowUserToResizeColumns = false;
+
+            dgvprodutos.ReadOnly = true;
+            dgvprodutos.MultiSelect = false;
+            dgvprodutos.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvprodutos.RowHeadersVisible = false;
+            dgvprodutos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            dgvprodutos.EnableHeadersVisualStyles = false;
+            dgvprodutos.BorderStyle = BorderStyle.None;
+            dgvprodutos.BackgroundColor = Color.FromArgb(252, 250, 249);
+            dgvprodutos.GridColor = Color.FromArgb(228, 206, 199);
+            dgvprodutos.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvprodutos.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+
+            dgvprodutos.ColumnHeadersHeight = 35;
+            dgvprodutos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            dgvprodutos.RowTemplate.Height = 32;
+
+            Color fundoLinha = Color.FromArgb(252, 250, 249);
+            Color fundoLinhaAlternada = Color.FromArgb(255, 253, 252);
+            Color fundoSelecionado = Color.FromArgb(243, 232, 228);
+            Color texto = Color.FromArgb(111, 84, 75);
+            Color fundoCabecalho = Color.FromArgb(239, 229, 226);
+            Color textoCabecalho = Color.FromArgb(111, 84, 75);
+
+            dgvprodutos.DefaultCellStyle.BackColor = fundoLinha;
+            dgvprodutos.DefaultCellStyle.ForeColor = texto;
+            dgvprodutos.DefaultCellStyle.SelectionBackColor = fundoSelecionado;
+            dgvprodutos.DefaultCellStyle.SelectionForeColor = texto;
+            dgvprodutos.DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            dgvprodutos.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dgvprodutos.DefaultCellStyle.Padding = new Padding(4, 0, 4, 0);
+
+            dgvprodutos.RowsDefaultCellStyle.BackColor = fundoLinha;
+            dgvprodutos.RowsDefaultCellStyle.ForeColor = texto;
+            dgvprodutos.RowsDefaultCellStyle.SelectionBackColor = fundoSelecionado;
+            dgvprodutos.RowsDefaultCellStyle.SelectionForeColor = texto;
+
+            dgvprodutos.AlternatingRowsDefaultCellStyle.BackColor = fundoLinhaAlternada;
+            dgvprodutos.AlternatingRowsDefaultCellStyle.ForeColor = texto;
+            dgvprodutos.AlternatingRowsDefaultCellStyle.SelectionBackColor = fundoSelecionado;
+            dgvprodutos.AlternatingRowsDefaultCellStyle.SelectionForeColor = texto;
+
+            dgvprodutos.ColumnHeadersDefaultCellStyle.BackColor = fundoCabecalho;
+            dgvprodutos.ColumnHeadersDefaultCellStyle.ForeColor = textoCabecalho;
+            dgvprodutos.ColumnHeadersDefaultCellStyle.SelectionBackColor = fundoCabecalho;
+            dgvprodutos.ColumnHeadersDefaultCellStyle.SelectionForeColor = textoCabecalho;
+            dgvprodutos.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            dgvprodutos.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dgvprodutos.ColumnHeadersDefaultCellStyle.Padding = new Padding(4, 0, 4, 0);
+
+            dgvprodutos.RowHeadersDefaultCellStyle.BackColor = fundoLinha;
+            dgvprodutos.RowHeadersDefaultCellStyle.ForeColor = texto;
+            dgvprodutos.RowHeadersDefaultCellStyle.SelectionBackColor = fundoSelecionado;
+            dgvprodutos.RowHeadersDefaultCellStyle.SelectionForeColor = texto;
+
+            DataGridViewTextBoxColumn colId = new DataGridViewTextBoxColumn();
+            colId.Name = "id_produto";
+            colId.HeaderText = "ID";
+            colId.DataPropertyName = "id_produto";
+            colId.Visible = false;
+            dgvprodutos.Columns.Add(colId);
+
+            DataGridViewTextBoxColumn colNome = new DataGridViewTextBoxColumn();
+            colNome.Name = "NomeProduto";
+            colNome.HeaderText = "Produto";
+            colNome.DataPropertyName = "NomeProduto";
+            colNome.FillWeight = 45;
+            dgvprodutos.Columns.Add(colNome);
+
+            DataGridViewTextBoxColumn colPreco = new DataGridViewTextBoxColumn();
+            colPreco.Name = "PrecoProduto";
+            colPreco.HeaderText = "Preço";
+            colPreco.DataPropertyName = "PrecoProduto";
+            colPreco.DefaultCellStyle.Format = "C2";
+            colPreco.FillWeight = 20;
+            dgvprodutos.Columns.Add(colPreco);
+
+            DataGridViewTextBoxColumn colCategoria = new DataGridViewTextBoxColumn();
+            colCategoria.Name = "nome_categoria";
+            colCategoria.HeaderText = "Categoria";
+            colCategoria.DataPropertyName = "nome_categoria";
+            colCategoria.FillWeight = 35;
+            dgvprodutos.Columns.Add(colCategoria);
+
+            foreach (DataGridViewColumn coluna in dgvprodutos.Columns)
+            {
+                coluna.ReadOnly = true;
+                coluna.SortMode = DataGridViewColumnSortMode.Automatic;
+                coluna.DefaultCellStyle.BackColor = fundoLinha;
+                coluna.DefaultCellStyle.ForeColor = texto;
+                coluna.DefaultCellStyle.SelectionBackColor = fundoSelecionado;
+                coluna.DefaultCellStyle.SelectionForeColor = texto;
+            }
+
+            dgvprodutos.ClearSelection();
+            dgvprodutos.CurrentCell = null;
+        }
+
+        private void CarregarCategoriasCadastro()
+        {
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string sql = @"
+                        SELECT id_categoria, nome_categoria
+                        FROM categorias
+                        ORDER BY nome_categoria;
+                    ";
+
+                    MySqlDataAdapter adapter = new MySqlDataAdapter(sql, con);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    cbCategoria.DataSource = dt;
+                    cbCategoria.DisplayMember = "nome_categoria";
+                    cbCategoria.ValueMember = "id_categoria";
+                    cbCategoria.SelectedIndex = -1;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao carregar categorias: " + ex.Message);
+                }
+            }
+        }
+
+        private void CarregarCategoriasFiltro()
+        {
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string sql = @"
+                        SELECT id_categoria, nome_categoria
+                        FROM categorias
+                        ORDER BY nome_categoria;
+                    ";
+
+                    MySqlDataAdapter adapter = new MySqlDataAdapter(sql, con);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    DataRow linhaTodos = dt.NewRow();
+                    linhaTodos["id_categoria"] = 0;
+                    linhaTodos["nome_categoria"] = "Todas as categorias";
+                    dt.Rows.InsertAt(linhaTodos, 0);
+
+                    cbFiltroCategoria.DataSource = dt;
+                    cbFiltroCategoria.DisplayMember = "nome_categoria";
+                    cbFiltroCategoria.ValueMember = "id_categoria";
+                    cbFiltroCategoria.SelectedIndex = 0;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao carregar filtro de categorias: " + ex.Message);
+                }
+            }
+        }
+
+        private void CarregarCategoriasLista()
+        {
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string sql = @"
+                        SELECT id_categoria, nome_categoria
+                        FROM categorias
+                        ORDER BY nome_categoria;
+                    ";
+
+                    MySqlDataAdapter adapter = new MySqlDataAdapter(sql, con);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    lstCategorias.DataSource = dt;
+                    lstCategorias.DisplayMember = "nome_categoria";
+                    lstCategorias.ValueMember = "id_categoria";
+                    lstCategorias.ClearSelected();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao carregar lista de categorias: " + ex.Message);
+                }
+            }
+        }
+
+        private void CarregarProdutos(string busca = "", int idCategoria = 0)
+        {
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string sql = @"
+                        SELECT
+                            p.id_produto,
+                            p.NomeProduto,
+                            p.PrecoProduto,
+                            c.nome_categoria
+                        FROM produtos p
+                        INNER JOIN categorias c ON p.id_categoria = c.id_categoria
+                        WHERE 1 = 1
+                    ";
+
+                    MySqlCommand cmd = new MySqlCommand();
+                    cmd.Connection = con;
+
+                    if (!string.IsNullOrWhiteSpace(busca))
+                    {
+                        sql += @"
+                            AND (
+                                p.NomeProduto LIKE @busca
+                                OR c.nome_categoria LIKE @busca
+                            )
+                        ";
+
+                        cmd.Parameters.AddWithValue("@busca", "%" + busca.Trim() + "%");
+                    }
+
+                    if (idCategoria > 0)
+                    {
+                        sql += " AND p.id_categoria = @id_categoria ";
+                        cmd.Parameters.AddWithValue("@id_categoria", idCategoria);
+                    }
+
+                    sql += " ORDER BY p.NomeProduto; ";
+
+                    cmd.CommandText = sql;
+
+                    MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    adapter.Fill(dt);
+
+                    dgvprodutos.DataSource = dt;
+                    dgvprodutos.ClearSelection();
+
+                    if (dgvprodutos.Rows.Count > 0)
+                    {
+                        dgvprodutos.CurrentCell = null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao carregar produtos: " + ex.Message);
+                }
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            SalvarProduto();
+        }
+
+        private string NormalizarTexto(string texto)
+        {
+            if (texto == null)
+                return "";
+
+            texto = texto.Trim();
+            texto = Regex.Replace(texto, @"\s+", " ");
+
+            return texto;
+        }
+
+        private bool CaracterePermitidoNome(char caractere)
+        {
+            if (char.IsLetter(caractere))
+                return true;
+
+            if (char.IsWhiteSpace(caractere))
+                return true;
+
+            if (caractere == '-' || caractere == '(' || caractere == ')')
+                return true;
+
+            return false;
+        }
+
+        private bool NomeProdutoOuCategoriaValido(string texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto))
+                return false;
+
+            bool temLetra = false;
+
+            foreach (char caractere in texto)
+            {
+                if (char.IsLetter(caractere))
+                    temLetra = true;
+
+                if (!CaracterePermitidoNome(caractere))
+                    return false;
+            }
+
+            return temLetra;
+        }
+
+        private void BloquearCaracteresInvalidos_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (char.IsControl(e.KeyChar))
+                return;
+
+            if (!CaracterePermitidoNome(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private bool ProdutoJaCadastrado(string nomeProduto, int idProdutoAtual)
+        {
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string sql = @"
+                        SELECT COUNT(*)
+                        FROM produtos
+                        WHERE LOWER(TRIM(NomeProduto)) = LOWER(TRIM(@nome))
+                          AND id_produto <> @id_produto_atual;
+                    ";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, con))
+                    {
+                        cmd.Parameters.AddWithValue("@nome", nomeProduto);
+                        cmd.Parameters.AddWithValue("@id_produto_atual", idProdutoAtual);
+
+                        int total = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        return total > 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao verificar produto duplicado: " + ex.Message);
+                    return true;
+                }
+            }
+        }
+
+        private bool CategoriaJaCadastrada(string nomeCategoria)
+        {
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string sql = @"
+                        SELECT COUNT(*)
+                        FROM categorias
+                        WHERE LOWER(TRIM(nome_categoria)) = LOWER(TRIM(@nome_categoria));
+                    ";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, con))
+                    {
+                        cmd.Parameters.AddWithValue("@nome_categoria", nomeCategoria);
+
+                        int total = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        return total > 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao verificar categoria duplicada: " + ex.Message);
+                    return true;
+                }
+            }
+        }
+
+        private void SalvarProduto()
+        {
+            string nomeProduto = NormalizarTexto(textBox1.Text);
+            string precoTexto = textBox2.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(nomeProduto))
+            {
+                MessageBox.Show("Digite o nome do produto.");
+                textBox1.Focus();
+                return;
+            }
+
+            if (!NomeProdutoOuCategoriaValido(nomeProduto))
+            {
+                MessageBox.Show(
+                    "O nome do produto não pode conter números ou caracteres especiais.\n\n" +
+                    "Use apenas letras, espaços, acentos, hífen e parênteses.\n\n" +
+                    "Exemplo: Bolo de Chocolate"
+                );
+
+                textBox1.Focus();
+                return;
+            }
+
+            if (cbCategoria.SelectedValue == null || cbCategoria.SelectedIndex < 0)
+            {
+                MessageBox.Show("Selecione uma categoria.");
+                cbCategoria.Focus();
+                return;
+            }
+
+            decimal precoProduto;
+
+            if (!decimal.TryParse(precoTexto, NumberStyles.Any, new CultureInfo("pt-BR"), out precoProduto))
+            {
+                MessageBox.Show("Digite um preço válido. Exemplo: 45,00");
+                textBox2.Focus();
+                return;
+            }
+
+            if (precoProduto <= 0)
+            {
+                MessageBox.Show("O preço precisa ser maior que zero.");
+                textBox2.Focus();
+                return;
+            }
+
+            if (ProdutoJaCadastrado(nomeProduto, idProdutoSelecionado))
+            {
+                MessageBox.Show("produto já cadastrado");
+                textBox1.Focus();
+                return;
+            }
+
+            int idCategoria = Convert.ToInt32(cbCategoria.SelectedValue);
+
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    if (idProdutoSelecionado == 0)
+                    {
+                        string sqlInsert = @"
+                            INSERT INTO produtos
+                            (
+                                NomeProduto,
+                                PrecoProduto,
+                                id_categoria
+                            )
+                            VALUES
+                            (
+                                @nome,
+                                @preco,
+                                @categoria
+                            );
+                        ";
+
+                        using (MySqlCommand cmd = new MySqlCommand(sqlInsert, con))
+                        {
+                            cmd.Parameters.AddWithValue("@nome", nomeProduto);
+                            cmd.Parameters.AddWithValue("@preco", precoProduto);
+                            cmd.Parameters.AddWithValue("@categoria", idCategoria);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        MessageBox.Show("Produto cadastrado com sucesso.");
+                    }
+                    else
+                    {
+                        string sqlUpdate = @"
+                            UPDATE produtos
+                            SET
+                                NomeProduto = @nome,
+                                PrecoProduto = @preco,
+                                id_categoria = @categoria
+                            WHERE id_produto = @id_produto;
+                        ";
+
+                        using (MySqlCommand cmd = new MySqlCommand(sqlUpdate, con))
+                        {
+                            cmd.Parameters.AddWithValue("@nome", nomeProduto);
+                            cmd.Parameters.AddWithValue("@preco", precoProduto);
+                            cmd.Parameters.AddWithValue("@categoria", idCategoria);
+                            cmd.Parameters.AddWithValue("@id_produto", idProdutoSelecionado);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        MessageBox.Show("Produto atualizado com sucesso.");
+                    }
+
+                    LimparCampos();
+                    CarregarProdutos();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao salvar produto: " + ex.Message);
+                }
+            }
+        }
+
+        private void btnAbrirCategoria_Click(object sender, EventArgs e)
+        {
+            txtNovaCategoria.Clear();
+
+            CarregarCategoriasLista();
+
+            panelNovaCategoria.Visible = true;
+            panelNovaCategoria.BringToFront();
+
+            txtNovaCategoria.Focus();
+        }
+
+        private void btnCancelarCategoria_Click(object sender, EventArgs e)
+        {
+            txtNovaCategoria.Clear();
+
+            if (lstCategorias.DataSource != null)
+            {
+                lstCategorias.ClearSelected();
+            }
+
+            panelNovaCategoria.Visible = false;
+        }
+
+        private void btnSalvarCategoria_Click(object sender, EventArgs e)
+        {
+            SalvarCategoria();
+        }
+
+        private void SalvarCategoria()
+        {
+            string nomeCategoria = NormalizarTexto(txtNovaCategoria.Text);
+
+            if (string.IsNullOrWhiteSpace(nomeCategoria))
+            {
+                MessageBox.Show("Digite o nome da categoria.");
+                txtNovaCategoria.Focus();
+                return;
+            }
+
+            if (!NomeProdutoOuCategoriaValido(nomeCategoria))
+            {
+                MessageBox.Show(
+                    "O nome da categoria não pode conter números ou caracteres especiais.\n\n" +
+                    "Use apenas letras, espaços, acentos, hífen e parênteses.\n\n" +
+                    "Exemplo: Bolos (Sabores)"
+                );
+
+                txtNovaCategoria.Focus();
+                return;
+            }
+
+            if (CategoriaJaCadastrada(nomeCategoria))
+            {
+                MessageBox.Show("categoria já cadastrada");
+                txtNovaCategoria.Focus();
+                return;
+            }
+
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string sql = @"
+                        INSERT INTO categorias
+                        (
+                            nome_categoria
+                        )
+                        VALUES
+                        (
+                            @nome_categoria
+                        );
+                        SELECT LAST_INSERT_ID();
+                    ";
+
+                    int idNovaCategoria = 0;
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, con))
+                    {
+                        cmd.Parameters.AddWithValue("@nome_categoria", nomeCategoria);
+
+                        object resultado = cmd.ExecuteScalar();
+
+                        if (resultado != null)
+                        {
+                            idNovaCategoria = Convert.ToInt32(resultado);
+                        }
+                    }
+
+                    MessageBox.Show("Categoria cadastrada com sucesso.");
+
+                    txtNovaCategoria.Clear();
+
+                    CarregarCategoriasCadastro();
+                    CarregarCategoriasFiltro();
+                    CarregarCategoriasLista();
+
+                    if (idNovaCategoria > 0)
+                    {
+                        cbCategoria.SelectedValue = idNovaCategoria;
+                    }
+
+                    txtNovaCategoria.Focus();
+                }
+                catch (MySqlException ex)
+                {
+                    if (ex.Number == 1062)
+                    {
+                        MessageBox.Show("categoria já cadastrada");
+                        txtNovaCategoria.Focus();
+                        return;
+                    }
+
+                    MessageBox.Show("Erro ao salvar categoria: " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao salvar categoria: " + ex.Message);
+                }
+            }
+        }
+
+        private void btnRemoverCategoria_Click(object sender, EventArgs e)
+        {
+            RemoverCategoriaSelecionada();
+        }
+
+        private void RemoverCategoriaSelecionada()
+        {
+            if (lstCategorias.SelectedValue == null || lstCategorias.SelectedIndex < 0)
+            {
+                MessageBox.Show("Selecione uma categoria para remover.");
+                lstCategorias.Focus();
+                return;
+            }
+
+            int idCategoria = Convert.ToInt32(lstCategorias.SelectedValue);
+            string nomeCategoria = lstCategorias.Text;
+
+            DialogResult resposta = MessageBox.Show(
+                "Deseja remover a categoria '" + nomeCategoria + "'?",
+                "Confirmar remoção",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning
+            );
+
+            if (resposta != DialogResult.Yes)
+                return;
+
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string verificarUso = @"
+                        SELECT COUNT(*)
+                        FROM produtos
+                        WHERE id_categoria = @id_categoria;
+                    ";
+
+                    using (MySqlCommand cmdVerificar = new MySqlCommand(verificarUso, con))
+                    {
+                        cmdVerificar.Parameters.AddWithValue("@id_categoria", idCategoria);
+
+                        int totalProdutos = Convert.ToInt32(cmdVerificar.ExecuteScalar());
+
+                        if (totalProdutos > 0)
+                        {
+                            MessageBox.Show(
+                                "Essa categoria possui produtos cadastrados e não pode ser removida.\n\n" +
+                                "Remova ou altere os produtos dessa categoria antes de excluir."
+                            );
+
+                            return;
+                        }
+                    }
+
+                    string sqlDelete = @"
+                        DELETE FROM categorias
+                        WHERE id_categoria = @id_categoria;
+                    ";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sqlDelete, con))
+                    {
+                        cmd.Parameters.AddWithValue("@id_categoria", idCategoria);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    MessageBox.Show("Categoria removida com sucesso.");
+
+                    txtNovaCategoria.Clear();
+
+                    CarregarCategoriasCadastro();
+                    CarregarCategoriasFiltro();
+                    CarregarCategoriasLista();
+                    CarregarProdutos();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao remover categoria: " + ex.Message);
+                }
+            }
+        }
+
+        private void btnfiltrarprodutos_Click(object sender, EventArgs e)
+        {
+            AplicarFiltros();
+        }
+
+        private void cbFiltroCategoria_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            AplicarFiltros();
+        }
+
+        private void txtpesquisarprod_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                AplicarFiltros();
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void AplicarFiltros()
+        {
+            int idCategoria = 0;
+
+            if (cbFiltroCategoria.SelectedValue != null)
+            {
+                int.TryParse(cbFiltroCategoria.SelectedValue.ToString(), out idCategoria);
+            }
+
+            string busca = txtpesquisarprod.Text.Trim();
+
+            CarregarProdutos(busca, idCategoria);
+        }
+
+        private void dgvprodutos_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+                return;
+
+            DataGridViewRow row = dgvprodutos.Rows[e.RowIndex];
+
+            idProdutoSelecionado = Convert.ToInt32(row.Cells["id_produto"].Value);
+            textBox1.Text = row.Cells["NomeProduto"].Value.ToString();
+
+            decimal preco = Convert.ToDecimal(row.Cells["PrecoProduto"].Value);
+            textBox2.Text = preco.ToString("N2", new CultureInfo("pt-BR"));
+
+            SelecionarCategoriaDoProduto(idProdutoSelecionado);
+
+            button1.Text = "Atualizar Produto";
+        }
+
+        private void SelecionarCategoriaDoProduto(int idProduto)
+        {
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string sql = @"
+                        SELECT id_categoria
+                        FROM produtos
+                        WHERE id_produto = @id_produto;
+                    ";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sql, con))
+                    {
+                        cmd.Parameters.AddWithValue("@id_produto", idProduto);
+
+                        object resultado = cmd.ExecuteScalar();
+
+                        if (resultado != null)
+                        {
+                            cbCategoria.SelectedValue = Convert.ToInt32(resultado);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao selecionar categoria do produto: " + ex.Message);
+                }
+            }
+        }
+
+        private void btnremover_Click(object sender, EventArgs e)
+        {
+            if (dgvprodutos.CurrentRow == null)
+            {
+                MessageBox.Show("Selecione um produto para remover.");
+                return;
+            }
+
+            int idProduto = Convert.ToInt32(dgvprodutos.CurrentRow.Cells["id_produto"].Value);
+            string nomeProduto = dgvprodutos.CurrentRow.Cells["NomeProduto"].Value.ToString();
+
+            DialogResult resposta = MessageBox.Show(
+                "Deseja remover o produto '" + nomeProduto + "'?",
+                "Confirmar remoção",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning
+            );
+
+            if (resposta != DialogResult.Yes)
+                return;
+
+            conexao conexao = new conexao();
+
+            using (MySqlConnection con = conexao.Conectar())
+            {
+                try
+                {
+                    con.Open();
+
+                    string verificarUso = @"
+                        SELECT COUNT(*)
+                        FROM itens_pedido
+                        WHERE id_produto = @id_produto;
+                    ";
+
+                    using (MySqlCommand cmdVerificar = new MySqlCommand(verificarUso, con))
+                    {
+                        cmdVerificar.Parameters.AddWithValue("@id_produto", idProduto);
+
+                        int totalUso = Convert.ToInt32(cmdVerificar.ExecuteScalar());
+
+                        if (totalUso > 0)
+                        {
+                            MessageBox.Show("Este produto já está vinculado a pedidos e não pode ser removido.");
+                            return;
+                        }
+                    }
+
+                    string sqlDelete = "DELETE FROM produtos WHERE id_produto = @id_produto;";
+
+                    using (MySqlCommand cmd = new MySqlCommand(sqlDelete, con))
+                    {
+                        cmd.Parameters.AddWithValue("@id_produto", idProduto);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    MessageBox.Show("Produto removido com sucesso.");
+
+                    LimparCampos();
+                    CarregarProdutos();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao remover produto: " + ex.Message);
+                }
+            }
+        }
+
+        private void LimparCampos()
+        {
+            idProdutoSelecionado = 0;
+            textBox1.Clear();
+            textBox2.Text = "0,00";
+            cbCategoria.SelectedIndex = -1;
+            button1.Text = "Salvar Produto";
+            textBox1.Focus();
+        }
+
+        private void btnMenuNA_Click(object sender, EventArgs e)
+        {
+            MenuPrincipal telamenu = new MenuPrincipal();
+            telamenu.Show();
+            this.Hide();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            NovoAgendamento telaagendamento = new NovoAgendamento();
+            telaagendamento.Show();
+            this.Hide();
+        }
+
+        private void btnPedidosAtuaisNA_Click(object sender, EventArgs e)
+        {
+            PedidosAtuais telapedidos = new PedidosAtuais();
+            telapedidos.Show();
+            this.Hide();
+        }
+
+        private void btnHistoricoNA_Click(object sender, EventArgs e)
+        {
+            FrmHistoricoPedidos telahistorico = new FrmHistoricoPedidos();
+            telahistorico.Show();
+            this.Hide();
+        }
+
+        private void btnSairNA_Click(object sender, EventArgs e)
+        {
+            TelaLogin login = new TelaLogin();
+            login.Show();
+            this.Hide();
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void textBox2_Click(object sender, EventArgs e)
+        {
+            textBox2.Clear();
+        }
+
+        private void CadastroProdutos_Load_1(object sender, EventArgs e)
+        {
+            MoverJanela.Ativar(this);
+        }
+    }
+}
